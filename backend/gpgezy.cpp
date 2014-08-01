@@ -103,8 +103,13 @@ void Gpgezy::doWork(const QStringList& args)
                 }
 
                 else {
-                    if (QFileInfo(*current).exists())
-                        files << *current;
+                    if (QFileInfo(*current).exists()) {
+
+                        if (!files.contains(*current))
+                            files << *current;
+                        else
+                            qDebug() << "file" << *current << "already in list";
+                    }
                     else {
                         qDebug() << "File " << *current << "not exists";
                         setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
@@ -199,8 +204,13 @@ void Gpgezy::doWork(const QStringList& args)
 
                 if (fi.exists()) {
 
-                    if (fi.suffix() == gpgezy::encrypted_files_suffix)
-                        files << *current;
+                    if (fi.suffix() == gpgezy::encrypted_files_suffix) {
+
+                        if (!files.contains(*current))
+                            files << *current;
+                        else
+                            qDebug() << "file" << *current << "already in list";
+                    }
                     else
                         qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted";
                 }
