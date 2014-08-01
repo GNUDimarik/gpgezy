@@ -41,24 +41,28 @@ void Gpgezy::doWork(const QStringList& args)
             if (current == args.end())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
-            QString fileName = *current;
+            while (current != args.end()) {
+                QString fileName = *current;
 
-            if (current == args.end() || fileName.isEmpty())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                if (current == args.end() || fileName.isEmpty())
+                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
-            if (!QFileInfo(fileName).exists()) {
-                qDebug() << "File " << fileName << "not exists";
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                if (!QFileInfo(fileName).exists()) {
+                    qDebug() << "File " << fileName << "not exists";
+                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                }
+
+                QCA::PGPKey key(fileName);
+
+                if (key.isNull()) {
+                    qDebug() << "Key is null";
+                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                }
+
+                checkIsKeyFileKeyringAndAddifNot(fileName, true);
+                ++ current;
             }
 
-            QCA::PGPKey key(fileName);
-
-            if (key.isNull()) {
-                qDebug() << "Key is null";
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
-            }
-
-            checkIsKeyFileKeyringAndAddifNot(fileName, true);
             setReturnStatus(EXIT_CODE_SUCCESS);
         } // --addkey
 
@@ -119,7 +123,7 @@ void Gpgezy::doWork(const QStringList& args)
                 ++ current;
             }
 
-            if (files.isEmpty())
+            if (files.isEmpty() & keyId.isEmpty() & keyFileName.isEmpty())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
             QCA::KeyStore key_store( QString("qca-gnupg"), ksm );
@@ -144,15 +148,13 @@ void Gpgezy::doWork(const QStringList& args)
                 }
             }
 
-            if (store_entry.isNull()) {
-                qDebug() << "Key" << *current << "not found";
+            if (store_entry.isNull())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
-            }
 
             for (current = files.begin(); current != files.end(); ++ current) {
                 QFile file(*current);
                 QString outputFileName = QFileInfo(*current).absolutePath() + QDir::separator() +
-                        QFileInfo(*current).fileName() + gpgezy::encrypted_files_suffix;
+                        QFileInfo(*current).fileName() + '.'+  gpgezy::encrypted_files_suffix;
 
                 if (file.open(QIODevice::ReadOnly)) {
                     QCA::SecureMessageKey to;
@@ -179,7 +181,7 @@ void Gpgezy::doWork(const QStringList& args)
                             qDebug() << "Can't open file" << outputFileName << "for write";
                     }
                     else
-                        qDebug() << "Ecryption error:" << msg.diagnosticText();
+                        showMessageDiagnostingText(msg.diagnosticText());
                 }
 
                 else
@@ -219,7 +221,40 @@ void Gpgezy::doWork(const QStringList& args)
             }
 
 
-            qDebug() << "files " << files;
+            Q_FOREACH(QString fileName, files) {
+                QFile inputFile(fileName);
+
+                if (inputFile.open(QIODevice::ReadOnly)) {
+                    QCA::OpenPGP pgp;
+                    QCA::setProperty("pgp-always-trust", true);
+                    QCA::SecureMessage msg(&pgp);
+                    msg.setFormat(QCA::SecureMessage::Binary);
+                    msg.startDecrypt();
+                    msg.update(inputFile.readAll());
+                    msg.end();
+                    msg.waitForFinished(-1);
+
+                    if (msg.success()) {
+                        QFileInfo fi(fileName);
+                        QFile outputFile(fi.absoluteFilePath().remove(fi.suffix()));
+
+                        if (outputFile.open(QIODevice::WriteOnly)) {
+                            QByteArray ba = msg.read();
+                            outputFile.write(ba.constData(), ba.length());
+                        }
+
+                        else
+                            qDebug() << "can't open file" << outputFile.fileName() << "for write";
+                    }
+
+                    else
+                        showMessageDiagnostingText(msg.diagnosticText());
+                }
+
+                else
+                    qDebug() << "can't open file" << fileName << "for read";
+            }
+
             setReturnStatus(EXIT_CODE_SUCCESS);
 
         } // --decrypt
@@ -280,4 +315,15 @@ void Gpgezy::setReturnStatus(int status)
         showUsage();
 
     exit(status);
+}
+
+void Gpgezy::showMessageDiagnostingText(const QString& text)
+{
+    QByteArray ba = text.toLatin1();
+
+#ifndef Q_OS_WIN
+    qDebug() << QString::fromUtf8(ba.constData(), ba.size());
+#else
+    qDebug() << QString::fromUtf16(ba.constData(), ba.size());
+#endif
 }

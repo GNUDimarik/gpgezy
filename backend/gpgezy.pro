@@ -4,8 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
-
+QT       += core
+QT       -= gui
 TARGET = gpgezy
 CONFIG   -= app_bundle
 CONFIG   += crypto

@@ -15,6 +15,7 @@ public Q_SLOTS:
     QString checkIsKeyFileKeyringAndAddifNot(const QString& fileName, bool showMessageIfKeyAlreadyAdded = false);
 private:
     void setReturnStatus(int status);
+    void showMessageDiagnostingText(const QString& text);
 };
 
 #endif // GPGEZY_H
