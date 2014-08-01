@@ -187,7 +187,7 @@ void Gpgezy::doWork(const QStringList& args)
         else if (*current == "--decrypt") {
             ++ current;
 
-            if (currnet == args.end())
+            if (current == args.end())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
             QStringList files;
@@ -198,7 +198,7 @@ void Gpgezy::doWork(const QStringList& args)
 
                 if (QFileInfo(*current).exists()) {
 
-                    if ()
+                    //if ()
 
                     files << *current;
                 }

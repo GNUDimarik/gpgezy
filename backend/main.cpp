@@ -1,4 +1,4 @@
-#include <QCoreApplication>
+#include <QApplication>
 #include "gpgezy.h"
 #include "constants.h"
 #include <QtCrypto>
@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QApplication a(argc, argv);
     QCA::Initializer init;
     Q_UNUSED(init)
 
