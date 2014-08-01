@@ -18,9 +18,10 @@ CONFIG += console
 
 LIBS += -lqca
 
-SOURCES += main.cpp \
+SOURCES += \
     gpgezy.cpp \
-    environment.cpp
+    environment.cpp \
+    main.cc
 
 HEADERS += \
     gpgezy.h \

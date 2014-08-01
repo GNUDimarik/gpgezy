@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <features.h>
+
 #define EXIT_CODE_SUCCESS                 0
 #define EXIT_CODE_DATA_DIR_IS_EMPTY       1
 #define EXIT_CODE_DB_DRIVER_IS_NOT_LOADED 2
@@ -10,5 +12,12 @@
 #define EXIT_CODEC_DB_OPENING_FAILED      6
 #define EXIT_CODE_INVALID_ARGUMENT        7
 #define EXIT_CODE_OPENPGP_IS_NOT_SUPORTED 8
+
+namespace gpgezy  {
+
+namespace {
+__attribute_used__ const char* encrypted_files_suffix = "gpg";
+}
+}
 
 #endif // CONSTANTS_H

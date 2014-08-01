@@ -146,7 +146,8 @@ void Gpgezy::doWork(const QStringList& args)
 
             for (current = files.begin(); current != files.end(); ++ current) {
                 QFile file(*current);
-                QString outputFileName = QFileInfo(*current).absolutePath() + QDir::separator() + QFileInfo(*current).fileName() + ".gpg";
+                QString outputFileName = QFileInfo(*current).absolutePath() + QDir::separator() +
+                        QFileInfo(*current).fileName() + gpgezy::encrypted_files_suffix;
 
                 if (file.open(QIODevice::ReadOnly)) {
                     QCA::SecureMessageKey to;
@@ -194,19 +195,22 @@ void Gpgezy::doWork(const QStringList& args)
 
             while (current != args.end()) {
 
+                QFileInfo fi(*current);
 
+                if (fi.exists()) {
 
-                if (QFileInfo(*current).exists()) {
-
-                    //if ()
-
-                    files << *current;
+                    if (fi.suffix() == gpgezy::encrypted_files_suffix)
+                        files << *current;
+                    else
+                        qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted";
                 }
 
                 ++ current;
             }
 
 
+            qDebug() << "files " << files;
+            setReturnStatus(EXIT_CODE_SUCCESS);
 
         } // --decrypt
 

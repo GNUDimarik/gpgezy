@@ -19,6 +19,5 @@ int main(int argc, char *argv[])
     a.setApplicationName("GPGEzy");
     Gpgezy* gpgezy = new Gpgezy(&a);;
     QTimer::singleShot(2, gpgezy, SLOT(start()));
-    //QMetaObject::invokeMethod(gpgezy, "doWork", Q_ARG(QStringList, qApp->arguments()));
     return a.exec();
 }
