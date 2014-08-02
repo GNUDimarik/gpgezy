@@ -41,5 +41,3 @@ OTHER_FILES += \
     database.sql \
     files_table.sql \
     qca/README
-
-LIBS += -lpthread

@@ -151,20 +151,21 @@ void Gpgezy::doWork(const QStringList& args)
             if (store_entry.isNull())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
+            QCA::SecureMessageKey to;
+            to.setPGPPublicKey(store_entry.pgpPublicKey());
+            to.setPGPSecretKey(store_entry.pgpSecretKey());
+            QCA::OpenPGP pgp;
+            QCA::setProperty("pgp-always-trust", true);
+            QCA::SecureMessage msg(&pgp);
+
             for (current = files.begin(); current != files.end(); ++ current) {
                 QFile file(*current);
                 QString outputFileName = QFileInfo(*current).absolutePath() + QDir::separator() +
                         QFileInfo(*current).fileName() + '.'+  gpgezy::encrypted_files_suffix;
 
                 if (file.open(QIODevice::ReadOnly)) {
-                    QCA::SecureMessageKey to;
-                    to.setPGPPublicKey(store_entry.pgpPublicKey());
-                    to.setPGPSecretKey(store_entry.pgpSecretKey());
-                    QCA::OpenPGP pgp;
-                    QCA::setProperty("pgp-always-trust", true);
-                    QCA::SecureMessage msg(&pgp);
                     msg.setRecipient(to);
-                    msg.setFormat(QCA::SecureMessage::Binary);
+                    msg.setFormat(QCA::SecureMessage::Ascii);
                     msg.startEncrypt();
                     msg.update(file.readAll());
                     msg.end();
