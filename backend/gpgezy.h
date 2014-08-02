@@ -14,7 +14,7 @@ public Q_SLOTS:
     void start();
     QString addKey(const QString& fileName);
 private:
-    void setReturnStatus(int status);
+    void setReturnCode(int status);
     void showMessageDiagnostingText(const QString& text);
 };
 

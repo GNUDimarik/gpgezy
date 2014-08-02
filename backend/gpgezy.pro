@@ -21,12 +21,14 @@ LIBS += -lqca
 SOURCES += \
     gpgezy.cpp \
     environment.cpp \
-    main.cc
+    gpgprocess.cpp \
+    main.cpp
 
 HEADERS += \
     gpgezy.h \
     constants.h \
-    environment.h
+    environment.h \
+    gpgprocess.h
 
 INCLUDEPATH += .
 MOC_DIR = build/moc

@@ -1,6 +1,7 @@
 #include "gpgezy.h"
 #include "constants.h"
 #include "environment.h"
+#include "gpgprocess.h"
 #include <memory>
 #include <QCoreApplication>
 #include <QStringList>
@@ -40,42 +41,42 @@ void Gpgezy::doWork(const QStringList& args)
 
             if (current->startsWith("--")) {
                 qDebug() << "unrecognized command option" << *current;
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
             }
 
             if (current == args.end())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             while (current != args.end()) {
                 QString fileName = *current;
 
                 if (current == args.end() || fileName.isEmpty())
-                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
                 if (!QFileInfo(fileName).exists()) {
                     qDebug() << "File " << fileName << "not exists";
-                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
 
                 QCA::PGPKey key(fileName);
 
                 if (key.isNull()) {
                     qDebug() << "Key is null";
-                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
 
                 addKey(fileName);
                 ++ current;
             }
 
-            setReturnStatus(EXIT_CODE_SUCCESS);
+            setReturnCode(EXIT_CODE_SUCCESS);
         } // --addkey
 
         else if (*current == "--encrypt") {
             ++ current;
 
             if (current == args.end())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             QStringList files;
             QString keyId;
@@ -91,14 +92,14 @@ void Gpgezy::doWork(const QStringList& args)
                     ++ current;
 
                     if (current == args.end())
-                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                        setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
                     if (QFileInfo(*current).exists())
                         keyFileName = *current;
 
                     else {
                         qDebug() << "File " << *current << "not exists";
-                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                        setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                     }
                 }
 
@@ -106,7 +107,7 @@ void Gpgezy::doWork(const QStringList& args)
                     ++ current;
 
                     if (current == args.end())
-                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                        setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
                     keyId = *current;
                 }
@@ -115,7 +116,7 @@ void Gpgezy::doWork(const QStringList& args)
 
                     if (current->startsWith("--")) {
                         qDebug() << "unrecognized command option" << *current;
-                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                        setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                     }
 
                     if (QFileInfo(*current).exists()) {
@@ -127,7 +128,7 @@ void Gpgezy::doWork(const QStringList& args)
                     }
                     else {
                         qDebug() << "File " << *current << "not exists";
-                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                        setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                     }
                 }
 
@@ -135,7 +136,7 @@ void Gpgezy::doWork(const QStringList& args)
             }
 
             if (files.isEmpty() & keyId.isEmpty() & keyFileName.isEmpty())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             QCA::KeyStore key_store( QString("qca-gnupg"), ksm );
 
@@ -153,7 +154,7 @@ void Gpgezy::doWork(const QStringList& args)
                     keyId = key.keyId();
                 else {
                     qDebug() << "Key from" << keyFileName << "is null";
-                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
             }
 
@@ -166,13 +167,13 @@ void Gpgezy::doWork(const QStringList& args)
             }
 
             if (store_entry.isNull())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             QCA::SecureMessageKey to;
+            QCA::setProperty("pgp-always-trust", true);
             to.setPGPPublicKey(store_entry.pgpPublicKey());
             to.setPGPSecretKey(store_entry.pgpSecretKey());
             QCA::OpenPGP pgp;
-            QCA::setProperty("pgp-always-trust", true);
             QCA::SecureMessage msg(&pgp);
 
             for (current = files.begin(); current != files.end(); ++ current) {
@@ -206,7 +207,7 @@ void Gpgezy::doWork(const QStringList& args)
                     qDebug() << "Can't open file" << *current << "for read";
             }
 
-            setReturnStatus(EXIT_CODE_SUCCESS);
+            setReturnCode(EXIT_CODE_SUCCESS);
 
         } // —encrypt
 
@@ -214,7 +215,7 @@ void Gpgezy::doWork(const QStringList& args)
             ++ current;
 
             if (current == args.end())
-                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             QStringList files;
 
@@ -222,7 +223,7 @@ void Gpgezy::doWork(const QStringList& args)
 
                 if (current->startsWith("--")) {
                     qDebug() << "unrecognized command option" << *current;
-                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
 
                 QFileInfo fi(*current);
@@ -240,6 +241,9 @@ void Gpgezy::doWork(const QStringList& args)
                         qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted, file"
                                  << *current << "not added in list";
                 }
+
+                else
+                    qDebug() << "file" << *current << "not exists";
 
                 ++ current;
             }
@@ -279,7 +283,7 @@ void Gpgezy::doWork(const QStringList& args)
                     qDebug() << "can't open file" << fileName << "for read";
             }
 
-            setReturnStatus(EXIT_CODE_SUCCESS);
+            setReturnCode(EXIT_CODE_SUCCESS);
 
         } // --decrypt
 
@@ -292,7 +296,7 @@ void Gpgezy::doWork(const QStringList& args)
         } // --create-key
     }
 
-    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+    setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 }
 
 void Gpgezy::start()
@@ -313,12 +317,14 @@ QString Gpgezy::addKey(const QString& fileName)
     QCA::KeyStore key_store( QString("qca-gnupg"), &ksm );
     QString str = key_store.writeEntry(key);
     qDebug() << "Key "  << str << "successfully added";
+    PGPProcess process;
+    process.importKey(fileName);
     return str;
 }
 
 // pivate members
 
-void Gpgezy::setReturnStatus(int status)
+void Gpgezy::setReturnCode(int status)
 {
     if (status != EXIT_CODE_SUCCESS)
         showUsage();
