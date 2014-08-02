@@ -38,6 +38,11 @@ void Gpgezy::doWork(const QStringList& args)
         if (*current == "--addkey") {
             ++ current;
 
+            if (current->startsWith("--")) {
+                qDebug() << "unrecognized command option" << *current;
+                setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+            }
+
             if (current == args.end())
                 setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
 
@@ -59,7 +64,7 @@ void Gpgezy::doWork(const QStringList& args)
                     setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
                 }
 
-                checkIsKeyFileKeyringAndAddifNot(fileName, true);
+                addKey(fileName);
                 ++ current;
             }
 
@@ -107,6 +112,12 @@ void Gpgezy::doWork(const QStringList& args)
                 }
 
                 else {
+
+                    if (current->startsWith("--")) {
+                        qDebug() << "unrecognized command option" << *current;
+                        setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                    }
+
                     if (QFileInfo(*current).exists()) {
 
                         if (!files.contains(*current))
@@ -132,12 +143,18 @@ void Gpgezy::doWork(const QStringList& args)
 
                 QCA::PGPKey key(keyFileName);
 
-                if (!key.isNull()) {
+                /*if (!key.isNull()) {
                     QCA::PGPKey(keyFileName);
                     keyId = key_store.writeEntry(key);
                 }
                 else
+                    qDebug() << "Key from" << keyFileName << "is null";*/
+                if (!key.isNull())
+                    keyId = key.keyId();
+                else {
                     qDebug() << "Key from" << keyFileName << "is null";
+                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                }
             }
 
             Q_FOREACH(const QCA::KeyStoreEntry store_key,  key_store.entryList()) {
@@ -165,7 +182,7 @@ void Gpgezy::doWork(const QStringList& args)
 
                 if (file.open(QIODevice::ReadOnly)) {
                     msg.setRecipient(to);
-                    msg.setFormat(QCA::SecureMessage::Ascii);
+                    msg.setFormat(QCA::SecureMessage::Binary);
                     msg.startEncrypt();
                     msg.update(file.readAll());
                     msg.end();
@@ -203,6 +220,11 @@ void Gpgezy::doWork(const QStringList& args)
 
             while (current != args.end()) {
 
+                if (current->startsWith("--")) {
+                    qDebug() << "unrecognized command option" << *current;
+                    setReturnStatus(EXIT_CODE_INVALID_ARGUMENT);
+                }
+
                 QFileInfo fi(*current);
 
                 if (fi.exists()) {
@@ -215,20 +237,21 @@ void Gpgezy::doWork(const QStringList& args)
                             qDebug() << "file" << *current << "already in list";
                     }
                     else
-                        qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted";
+                        qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted, file"
+                                 << *current << "not added in list";
                 }
 
                 ++ current;
             }
 
+            QCA::OpenPGP pgp;
+            QCA::setProperty("pgp-always-trust", true);
+            QCA::SecureMessage msg(&pgp);
 
             Q_FOREACH(QString fileName, files) {
                 QFile inputFile(fileName);
 
                 if (inputFile.open(QIODevice::ReadOnly)) {
-                    QCA::OpenPGP pgp;
-                    QCA::setProperty("pgp-always-trust", true);
-                    QCA::SecureMessage msg(&pgp);
                     msg.setFormat(QCA::SecureMessage::Binary);
                     msg.startDecrypt();
                     msg.update(inputFile.readAll());
@@ -237,7 +260,7 @@ void Gpgezy::doWork(const QStringList& args)
 
                     if (msg.success()) {
                         QFileInfo fi(fileName);
-                        QFile outputFile(fi.absoluteFilePath().remove(fi.suffix()));
+                        QFile outputFile(fi.absoluteFilePath().remove('.' + fi.suffix()));
 
                         if (outputFile.open(QIODevice::WriteOnly)) {
                             QByteArray ba = msg.read();
@@ -277,7 +300,7 @@ void Gpgezy::start()
     doWork(qApp->arguments());
 }
 
-QString Gpgezy::checkIsKeyFileKeyringAndAddifNot(const QString& fileName, bool showMessageIfKeyAlreadyAdded)
+QString Gpgezy::addKey(const QString& fileName)
 {
     QCA::PGPKey key(fileName);
 
@@ -288,23 +311,8 @@ QString Gpgezy::checkIsKeyFileKeyringAndAddifNot(const QString& fileName, bool s
     QCA::KeyStoreManager ksm(this);
     ksm.waitForBusyFinished();
     QCA::KeyStore key_store( QString("qca-gnupg"), &ksm );
-
-    Q_FOREACH(const QCA::KeyStoreEntry store_key,  key_store.entryList()) {
-
-        if (store_key.id() == key.keyId()) {
-
-            if (showMessageIfKeyAlreadyAdded)
-                qDebug() << "Key" << key.keyId() << "already added";
-
-            return key.keyId();
-        }
-    }
-
     QString str = key_store.writeEntry(key);
-
-    if (!str.isEmpty())
-        qDebug() << "Key "  << str << "successfully added";
-
+    qDebug() << "Key "  << str << "successfully added";
     return str;
 }
 

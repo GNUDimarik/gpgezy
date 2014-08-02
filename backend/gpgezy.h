@@ -12,7 +12,7 @@ public Q_SLOTS:
     void showUsage();
     void doWork(const QStringList& args);
     void start();
-    QString checkIsKeyFileKeyringAndAddifNot(const QString& fileName, bool showMessageIfKeyAlreadyAdded = false);
+    QString addKey(const QString& fileName);
 private:
     void setReturnStatus(int status);
     void showMessageDiagnostingText(const QString& text);
