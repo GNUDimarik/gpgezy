@@ -4,8 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core
-QT       -= gui
+QT       += core gui
 TARGET = gpgezy
 CONFIG   -= app_bundle
 CONFIG   += crypto
@@ -36,8 +35,7 @@ UI_DIR  = build/ui
 OBJECTS_DIR = build/obj
 RCC_DIR = build/obj
 
-RESOURCES += \
-    gpgezy.qrc
+RESOURCES +=
 
 OTHER_FILES += \
     database.sql \

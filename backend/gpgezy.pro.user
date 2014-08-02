@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.1.2, 2014-08-02T06:58:24. -->
+<!-- Written by QtCreator 3.1.2, 2014-08-02T07:50:19. -->
 <qtcreator>
  <data>
   <variable>ProjectExplorer.Project.ActiveTarget</variable>
@@ -204,7 +204,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">gpgezy</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">gpgezy2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/dmitry/work/adamlaw/gpgezy/backend/gpgezy.pro</value>
-    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">--addkey /home/dmitry/20140715_Client_CF8EB0A_private_key.asc</value>
+    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">--addkey /home/dmitry/p.asc</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">gpgezy.pro</value>
     <value type="bool" key="Qt4ProjectManager.Qt4RunConfiguration.UseDyldImageSuffix">false</value>
     <value type="bool" key="Qt4ProjectManager.Qt4RunConfiguration.UseTerminal">false</value>

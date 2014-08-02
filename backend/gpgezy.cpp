@@ -9,7 +9,11 @@
 #include <QDir>
 #include <QFile>
 #include <QtCrypto>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QDebug>
+#include <iostream>
+#include <string>
 
 Gpgezy::Gpgezy(QObject *parent) :
     QObject(parent)
@@ -135,8 +139,10 @@ void Gpgezy::doWork(const QStringList& args)
                 ++ current;
             }
 
-            if (files.isEmpty() & keyId.isEmpty() & keyFileName.isEmpty())
+            if (keyId.isEmpty() && keyFileName.isEmpty()) {
+                qDebug() << "Can't decrypt without key";
                 setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
+            }
 
             QCA::KeyStore key_store( QString("qca-gnupg"), ksm );
 
@@ -144,14 +150,8 @@ void Gpgezy::doWork(const QStringList& args)
 
                 QCA::PGPKey key(keyFileName);
 
-                /*if (!key.isNull()) {
-                    QCA::PGPKey(keyFileName);
-                    keyId = key_store.writeEntry(key);
-                }
-                else
-                    qDebug() << "Key from" << keyFileName << "is null";*/
                 if (!key.isNull())
-                    keyId = key.keyId();
+                   keyId = key_store.writeEntry(key);
                 else {
                     qDebug() << "Key from" << keyFileName << "is null";
                     setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
@@ -166,8 +166,10 @@ void Gpgezy::doWork(const QStringList& args)
                 }
             }
 
-            if (store_entry.isNull())
+            if (store_entry.isNull()) {
+                qDebug() << "Invalid key";
                 setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
+            }
 
             QCA::SecureMessageKey to;
             QCA::setProperty("pgp-always-trust", true);
@@ -218,32 +220,43 @@ void Gpgezy::doWork(const QStringList& args)
                 setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
 
             QStringList files;
+            bool openDecryptedFiles = true;
+            bool overwriteExistingFiles = false;
 
             while (current != args.end()) {
 
-                if (current->startsWith("--")) {
+                if (*current == "--donotview")
+                    openDecryptedFiles = false;
+
+                else if (*current == "--overwrite")
+                    overwriteExistingFiles = true;
+
+                else if (current->startsWith("--")) {
                     qDebug() << "unrecognized command option" << *current;
                     setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
 
-                QFileInfo fi(*current);
+                else {
+                    QFileInfo fi(*current);
 
-                if (fi.exists()) {
+                    if (fi.exists()) {
 
-                    if (fi.suffix() == gpgezy::encrypted_files_suffix) {
+                        if (fi.suffix() == gpgezy::encrypted_files_suffix) {
 
-                        if (!files.contains(*current))
-                            files << *current;
+                            if (!files.contains(*current))
+                                files << *current;
+                            else
+                                qDebug() << "file" << *current << "already in list";
+                        }
                         else
-                            qDebug() << "file" << *current << "already in list";
+                            qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted, file"
+                                     << *current << "not added in list";
                     }
-                    else
-                        qDebug() << "Only " << gpgezy::encrypted_files_suffix << "can be encrypted, file"
-                                 << *current << "not added in list";
-                }
 
-                else
-                    qDebug() << "file" << *current << "not exists";
+                    else
+                        qDebug() << "file" << *current << "not exists";
+
+                }
 
                 ++ current;
             }
@@ -264,11 +277,37 @@ void Gpgezy::doWork(const QStringList& args)
 
                     if (msg.success()) {
                         QFileInfo fi(fileName);
-                        QFile outputFile(fi.absoluteFilePath().remove('.' + fi.suffix()));
+                        QString fileName = fi.absoluteFilePath().remove('.' + fi.suffix());
+                        QString outputFileName = fileName;
+
+                        if (!overwriteExistingFiles) {
+
+                            QFileInfo finfo(fileName);
+                            int i = 1;
+
+                            while (finfo.exists()) {
+                                QString baseName = fi.baseName();
+                                baseName += QString("_%1").arg(i ++);
+                                QString fname = finfo.fileName();
+                                fname = fname.replace(finfo.baseName(), baseName);
+                                finfo = QFileInfo(finfo.absolutePath() + QDir::separator() + fname);
+                            }
+
+                            outputFileName = finfo.absoluteFilePath();
+                        }
+
+                        QFile outputFile(outputFileName);
 
                         if (outputFile.open(QIODevice::WriteOnly)) {
                             QByteArray ba = msg.read();
-                            outputFile.write(ba.constData(), ba.length());
+                            qint64 ret = outputFile.write(ba.constData(), ba.length());
+
+                            if (ret > -1) {
+                                if (openDecryptedFiles)
+                                    QDesktopServices::openUrl(QUrl::fromLocalFile(outputFileName));
+                            }
+                            else
+                                qDebug() << "error occured during writing in output file" << outputFile.errorString();
                         }
 
                         else
@@ -316,9 +355,9 @@ QString Gpgezy::addKey(const QString& fileName)
     ksm.waitForBusyFinished();
     QCA::KeyStore key_store( QString("qca-gnupg"), &ksm );
     QString str = key_store.writeEntry(key);
-    qDebug() << "Key "  << str << "successfully added";
     PGPProcess process;
     process.importKey(fileName);
+    qDebug() << "Key "  << str << "successfully added";
     return str;
 }
 

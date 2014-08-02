@@ -1,4 +1,4 @@
-#include <QCoreApplication>
+#include <QApplication>
 #include "gpgezy.h"
 #include "constants.h"
 #include <QtCrypto>
@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QApplication a(argc, argv);
     QCA::Initializer init;
     Q_UNUSED(init)
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
         return EXIT_CODE_OPENPGP_IS_NOT_SUPORTED;
     }
 
-    a.setApplicationName("GPGEzy");
+    a.setApplicationName("GPGEZY");
     Gpgezy* gpgezy = new Gpgezy(&a);;
     QTimer::singleShot(2, gpgezy, SLOT(start()));
     return a.exec();
