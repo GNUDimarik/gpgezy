@@ -14,3 +14,4 @@ Please use Qt 4.8.5 ming32 (it built the same  mingw version)
 
 please read skype chat where were Adam, you and I.
 Please fill free to contact me anytime
+Please try to understand why gpg.exe tries to use wrong paths, I think gpg need in some configurations, please investigate
