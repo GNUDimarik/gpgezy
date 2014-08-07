@@ -1,5 +1,0 @@
-—addkey key file name
-—encrypt encrypt one or several files  --keyid key_ID --keyname key file name
-—decrypt decrypt one or several files
-—export-key for exporting key --keyid --keyname --public --private
-—create-key

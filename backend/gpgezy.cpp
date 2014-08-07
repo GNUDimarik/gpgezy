@@ -12,6 +12,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDebug>
+#include <QTextCodec>
 #include <iostream>
 #include <string>
 
@@ -152,8 +153,9 @@ void Gpgezy::doWork(const QStringList& args)
 
                 if (!key.isNull())
                    keyId = key_store.writeEntry(key);
-                else {
-                    qDebug() << "Key from" << keyFileName << "is null";
+                else {                                        
+                    qDebug() << "Key from" << keyFileName << "is null";                    
+                    showMessageDiagnostingText(ksm->diagnosticText());
                     setReturnCode(EXIT_CODE_INVALID_ARGUMENT);
                 }
             }
@@ -372,12 +374,22 @@ void Gpgezy::setReturnCode(int status)
 }
 
 void Gpgezy::showMessageDiagnostingText(const QString& text)
-{
-    QByteArray ba = text.toLatin1();
-
+{    
 #ifndef Q_OS_WIN
+    QByteArray ba = text.toLatin1();
     qDebug() << QString::fromUtf8(ba.constData(), ba.size());
 #else
-    qDebug() << QString::fromUtf16(ba.constData(), ba.size());
+    qDebug() << text;
 #endif
+
+    QFile file("C:\\binaries\\binaries\\log.txt");
+
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream stream(&file);
+        stream.setCodec(QTextCodec::codecForName("IBM 850"));
+        stream << text;
+    }
+
+    else
+        qDebug() << "Can't create log file";
 }

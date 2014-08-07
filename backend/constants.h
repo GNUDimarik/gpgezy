@@ -1,7 +1,15 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#ifndef Q_OS_WIN
 #include <features.h>
+#else
+    #if defined(__GNUC__)
+        #define __attribute_used__ __attribute__ ((unused))
+    #else
+        #define __attribute_used__
+    #endif
+#endif
 
 #define EXIT_CODE_SUCCESS                 0
 #define EXIT_CODE_DATA_DIR_IS_EMPTY       1

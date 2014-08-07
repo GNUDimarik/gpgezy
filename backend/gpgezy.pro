@@ -8,14 +8,13 @@ QT       += core gui
 TARGET = gpgezy
 CONFIG   -= app_bundle
 CONFIG   += crypto
-
+INCLUDEPATH += C:/qca-win32/qca/include/QtCrypto
 TEMPLATE = app
+windows:LIBS += -ladvapi32
+windows:CONFIG += console
 
-win32 {
-CONFIG += console
-}
 
-LIBS += -lqca
+LIBS += -LC:/qca-2.0.3-win32/lib -lqca2
 
 SOURCES += \
     gpgezy.cpp \
@@ -29,7 +28,7 @@ HEADERS += \
     environment.h \
     gpgprocess.h
 
-INCLUDEPATH += .
+INCLUDEPATH += . build/moc
 MOC_DIR = build/moc
 UI_DIR  = build/ui
 OBJECTS_DIR = build/obj
